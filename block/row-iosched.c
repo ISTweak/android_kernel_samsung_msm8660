@@ -1,7 +1,7 @@
 /*
  * ROW (Read Over Write) I/O scheduler.
  *
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -276,6 +276,8 @@ static void row_add_request(struct request_queue *q,
 {
 	struct row_data *rd = (struct row_data *)q->elevator->elevator_data;
 	struct row_queue *rqueue = RQ_ROWQ(rq);
+	s64 diff_ms;
+	bool queue_was_empty = list_empty(&rqueue->fifo);
 
 	list_add_tail(&rq->queuelist, &rqueue->fifo);
 	rd->nr_reqs[rq_data_dir(rq)]++;
@@ -283,12 +285,26 @@ static void row_add_request(struct request_queue *q,
 	rq_set_fifo_time(rq, jiffies); /* for statistics*/
 
 	if (row_queues_def[rqueue->prio].idling_enabled) {
-		if (delayed_work_pending(&rd->read_idle.idle_work))
-			(void)cancel_delayed_work(
-				&rd->read_idle.idle_work);
-		if (ktime_to_ms(ktime_sub(ktime_get(),
-				rqueue->idle_data.last_insert_time)) <
-				rd->read_idle.freq) {
+		if (rd->rd_idle_data.idling_queue_idx == rqueue->prio &&
+		    hrtimer_active(&rd->rd_idle_data.hr_timer)) {
+			if (hrtimer_try_to_cancel(
+				&rd->rd_idle_data.hr_timer) >= 0) {
+				row_log_rowq(rd, rqueue->prio,
+				    "Canceled delayed work on %d",
+				    rd->rd_idle_data.idling_queue_idx);
+				rd->rd_idle_data.idling_queue_idx =
+					ROWQ_MAX_PRIO;
+			}
+		}
+		diff_ms = ktime_to_ms(ktime_sub(ktime_get(),
+				rqueue->idle_data.last_insert_time));
+		if (unlikely(diff_ms < 0)) {
+			pr_err("%s(): time delta error: diff_ms < 0",
+				__func__);
+			rqueue->idle_data.begin_idling = false;
+			return;
+		}
+		if (diff_ms < rd->rd_idle_data.freq_ms) {
 			rqueue->idle_data.begin_idling = true;
 			row_log_rowq(rd, rqueue->prio, "Enable idling");
 		} else {
