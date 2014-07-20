@@ -701,7 +701,8 @@ out:
 	return rc;
 }
 
-#ifdef CONFIG_VDD_USERSPACE
+#ifdef CONFIG_CPU_VOLTAGE_TABLE
+
 ssize_t acpuclk_get_vdd_levels_str(char *buf) {
 	int i, len = 0;
 
@@ -709,6 +710,7 @@ ssize_t acpuclk_get_vdd_levels_str(char *buf) {
 		mutex_lock(&drv_state.lock);
 
 		for (i = 0; acpu_freq_tbl[i].acpuclk_khz; i++) {
+			/* updated to use uv required by 8x60 architecture - faux123 */
 			len += sprintf(buf + len, "%8u: %8d\n", acpu_freq_tbl[i].acpuclk_khz, acpu_freq_tbl[i].vdd_sc );
 		}
 
@@ -717,6 +719,7 @@ ssize_t acpuclk_get_vdd_levels_str(char *buf) {
 	return len;
 }
 
+/* updated to use uv required by 8x60 architecture - faux123 */
 void acpuclk_set_vdd(unsigned int khz, int vdd_uv) {
 	int i;
 	unsigned int new_vdd_uv;
@@ -735,7 +738,7 @@ void acpuclk_set_vdd(unsigned int khz, int vdd_uv) {
 
 	mutex_unlock(&drv_state.lock);
 }
-#endif
+#endif	/* CONFIG_CPU_VOTALGE_TABLE */
  
 static void __init scpll_init(int sc_pll)
 {
