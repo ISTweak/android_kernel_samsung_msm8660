@@ -8750,8 +8750,6 @@ static struct platform_device *rumi_sim_devices[] __initdata = {
 #endif
 	&msm_fb_device,
 	&msm_kgsl_3d0,
-	&msm_kgsl_2d0,
-	&msm_kgsl_2d1,
 #if 1 // def CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL
 	&mipi_dsi_s6e8aa0_wxga_q1_panel_device,
 #else		
@@ -9814,8 +9812,6 @@ static struct platform_device *surf_devices[] __initdata = {
 #endif
 	&msm_fb_device,
 	&msm_kgsl_3d0,
-	&msm_kgsl_2d0,
-	&msm_kgsl_2d1,
 
 #if 1// def CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL
 	&mipi_dsi_s6e8aa0_wxga_q1_panel_device,
@@ -17321,9 +17317,6 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	 * Initialize RPM first as other drivers and devices may need
 	 * it for their initialization.
 	 */
-
-	msm_tsens_early_init(&her_tsens_pdata);
-
 #ifdef CONFIG_MSM_RPM
 	BUG_ON(msm_rpm_init(&msm_rpm_data));
 #endif
@@ -17331,8 +17324,6 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 				ARRAY_SIZE(msm_rpmrs_levels)));
 	if (msm_xo_init())
 		pr_err("Failed to initialize XO votes\n");
-
-	msm8x60_check_2d_hardware();
 
 #ifdef CONFIG_KOR_MODEL_SHV_E160L	// add EAR_VOL_KEY 
 	if(system_rev >= 0x08)

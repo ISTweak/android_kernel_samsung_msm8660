@@ -301,7 +301,6 @@ out:
 	return NOTIFY_DONE;
 }
 
-#ifdef CONFIG_SEC_DVFS_DUAL
 static int is_dual_locked = 0;
 static int is_sysfs_used = 0;
 static int is_uevent_sent = 0;
@@ -468,6 +467,11 @@ static struct kobj_attribute def_timer_ms_attr =
 static ssize_t show_cpu_normalized_load(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
+#ifdef CONFIG_SEC_DVFS_DUAL
+	if (is_dual_locked == 1)
+		return snprintf(buf, MAX_LONG_SIZE, "%u\n", report_load_at_max_freq() + 200);
+	else
+#endif
 	return snprintf(buf, MAX_LONG_SIZE, "%u\n", report_load_at_max_freq());
 }
 
