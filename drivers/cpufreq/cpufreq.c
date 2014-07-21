@@ -475,28 +475,7 @@ static ssize_t store_scaling_min_freq
 store_one(scaling_min_freq, min);
 #endif
 
-#ifdef CONFIG_SEC_DVFS
-static ssize_t store_scaling_max_freq
-(struct cpufreq_policy *policy, const char *buf, size_t count)
-{									
-	unsigned int ret = -EINVAL;
-	unsigned int value = 0;
-	
-	ret = sscanf(buf, "%u", &value);
-	if (ret != 1)							
-		return -EINVAL;
-
-	if (policy->cpu == BOOT_CPU) 
-{									
-		if (value >= MAX_FREQ_LIMIT)
-			set_freq_limit(DVFS_THERMALD_ID, -1);
-		else if (value >= MIN_FREQ_LIMIT)
-			set_freq_limit(DVFS_THERMALD_ID, value);
-	}
-
-	return count;
-}
-#elif defined(CONFIG_LINK_CPU_GOVERNORS)
+#if defined(CONFIG_LINK_CPU_GOVERNORS)
 static ssize_t store_scaling_max_freq
 (struct cpufreq_policy *policy, const char *buf, size_t count)
 {							
